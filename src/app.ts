@@ -27,6 +27,7 @@ app.get('/', (_req: Request, res: Response) => {
       health: '/health (o /api/health)',
       users: '/users (o /api/users)',
       sitios: '/sitios (o /api/sitios)',
+      sitiosMapa: '/sitios/mapa (o /api/sitios/mapa)',
       sitiosResumen: '/sitios/resumen (o /api/sitios/resumen)',
       reportes: '/reportes (o /api/reportes)',
     },

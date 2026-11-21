@@ -52,6 +52,36 @@ function serializeSitio(sitio: SitioRecord) {
   };
 }
 
+export const getSitiosMapa = async (_req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const sitios = await prisma.sitio.findMany({
+      select: {
+        id: true,
+        lugar: true,
+        departamento: true,
+        longitud: true,
+        latitud: true,
+        poblacion5km: true,
+      },
+      orderBy: { id: 'asc' },
+    });
+
+    res.json({
+      success: true,
+      data: sitios.map((sitio) => ({
+        id: sitio.id,
+        lugar: sitio.lugar,
+        departamento: sitio.departamento,
+        longitud: decimal(sitio.longitud),
+        latitud: decimal(sitio.latitud),
+        poblacion5km: sitio.poblacion5km,
+      })),
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const getSitios = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const departamento = typeof req.query.departamento === 'string' ? req.query.departamento : undefined;
