@@ -93,3 +93,21 @@ COMMENT ON TABLE fotos IS
     'Fotos de un reporte. El archivo vive fuera de Postgres; aquí solo se guarda la URL.';
 COMMENT ON COLUMN fotos.url IS
     'Dirección del archivo en el almacenamiento de objetos.';
+
+-- Anonymous comments shown on the public site. No name or contact is stored.
+
+CREATE TABLE comentarios (
+    id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    texto       varchar(200) NOT NULL,
+    creado_en   timestamptz NOT NULL DEFAULT now(),
+
+    CONSTRAINT comentarios_texto_no_vacio
+        CHECK (char_length(btrim(texto)) > 0)
+);
+
+CREATE INDEX comentarios_creado_en_idx ON comentarios (creado_en DESC);
+
+COMMENT ON TABLE comentarios IS
+    'Comentarios anónimos del sitio público. No guardan nombre ni datos de contacto.';
+COMMENT ON COLUMN comentarios.texto IS
+    'Texto del comentario, máximo 200 caracteres.';
