@@ -7,10 +7,10 @@ node_modules/
 dist/
 build/
 
-# Environment files
+# Environment files. Commit the template only; real secrets stay local.
 .env
-.env.local
-.env.*.local
+.env.*
+!.env.example
 
 # Logs
 npm-debug.log*
