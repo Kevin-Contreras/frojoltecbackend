@@ -82,6 +82,66 @@ export const getSitiosMapa = async (_req: Request, res: Response, next: NextFunc
   }
 };
 
+function nombreCorto(lugar: string, departamento: string): string {
+  const parts = lugar.split(',').map((part) => part.trim()).filter(Boolean);
+  const department = departamento.toLocaleLowerCase('es');
+  const stop = parts.findIndex((part) => {
+    const value = part.toLocaleLowerCase('es');
+    return (
+      value === department ||
+      value.includes('guatemala') ||
+      /^\d{4,}$/.test(value) ||
+      value.startsWith('zone ') ||
+      value.startsWith('zona ')
+    );
+  });
+  const kept = (stop === -1 ? parts : parts.slice(0, stop)).slice(0, 2);
+  return kept.join(', ') || lugar;
+}
+
+function matchesTerm(text: string, query: string): boolean {
+  const escaped = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return new RegExp(`(^|[^\\p{L}\\p{N}])${escaped}([^\\p{L}\\p{N}]|$)`, 'iu').test(text);
+}
+
+export const getSitiosBuscar = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const q = typeof req.query.q === 'string' ? req.query.q.trim() : '';
+    const query = q.toLocaleLowerCase('es');
+
+    const sitios = await prisma.sitio.findMany({
+      select: {
+        id: true,
+        lugar: true,
+        departamento: true,
+      },
+      orderBy: { id: 'asc' },
+    });
+
+    const matches = q
+      ? sitios.filter((sitio) => {
+          if (sitio.departamento.toLocaleLowerCase('es').includes(query)) return true;
+          const nombre = nombreCorto(sitio.lugar, sitio.departamento);
+          return matchesTerm(nombre, query) || matchesTerm(sitio.lugar, query);
+        })
+      : sitios;
+
+    const data = matches.map((sitio) => ({
+      id: sitio.id,
+      nombre: nombreCorto(sitio.lugar, sitio.departamento),
+      departamento: sitio.departamento,
+    }));
+
+    res.json({
+      success: true,
+      total: data.length,
+      data,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const getSitiosLista = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const q = typeof req.query.q === 'string' ? req.query.q.trim() : '';
