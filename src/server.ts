@@ -7,4 +7,5 @@ app.listen(config.port, () => {
   console.log(`👥 Usuarios API: http://localhost:${config.port}/users`);
   console.log(`📍 Sitios API: http://localhost:${config.port}/sitios`);
   console.log(`📝 Reportes API: http://localhost:${config.port}/reportes`);
+  console.log(`💬 Comentarios API: http://localhost:${config.port}/comentarios`);
 });

@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import comentarioRoutes from './comentario.routes';
 import healthRoutes from './health.routes';
 import reporteRoutes from './reporte.routes';
 import sitioRoutes from './sitio.routes';
@@ -10,5 +11,6 @@ router.use('/health', healthRoutes);
 router.use('/users', userRoutes);
 router.use('/sitios', sitioRoutes);
 router.use('/reportes', reporteRoutes);
+router.use('/comentarios', comentarioRoutes);
 
 export default router;
