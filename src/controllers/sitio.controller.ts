@@ -152,12 +152,17 @@ export const getSitios = async (req: Request, res: Response, next: NextFunction)
 
 export const getSitiosResumen = async (_req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const [total, porDepartamento, porAgua] = await Promise.all([
+    const [lugares, cercaDelAgua, revisadosEnPersona, porDepartamento, porAgua] = await Promise.all([
       prisma.sitio.count(),
+      prisma.sitio.count({
+        where: { distanciaAguaM: { lt: 500 } },
+      }),
+      prisma.sitio.count({
+        where: { verificadoEnCampo: true },
+      }),
       prisma.sitio.groupBy({
         by: ['departamento'],
         _count: { _all: true },
-        orderBy: { _count: { departamento: 'desc' } },
       }),
       prisma.sitio.groupBy({
         by: ['tipoAguaCercana'],
@@ -166,14 +171,22 @@ export const getSitiosResumen = async (_req: Request, res: Response, next: NextF
       }),
     ]);
 
+    const departamentos = porDepartamento
+      .map((row) => ({
+        departamento: row.departamento,
+        sitios: row._count._all,
+      }))
+      .sort((a, b) => b.sitios - a.sitios || a.departamento.localeCompare(b.departamento, 'es'));
+
     res.json({
       success: true,
       data: {
-        total,
-        porDepartamento: porDepartamento.map((row) => ({
-          departamento: row.departamento,
-          sitios: row._count._all,
-        })),
+        lugares,
+        departamentos: departamentos.length,
+        cercaDelAgua,
+        revisadosEnPersona,
+        total: lugares,
+        porDepartamento: departamentos,
         porTipoAguaCercana: porAgua.map((row) => ({
           tipoAguaCercana: row.tipoAguaCercana,
           sitios: row._count._all,
