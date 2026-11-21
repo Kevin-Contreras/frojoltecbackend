@@ -31,6 +31,8 @@ app.get('/', (_req: Request, res: Response) => {
       sitiosResumen: '/sitios/resumen (o /api/sitios/resumen)',
       reportes: '/reportes (o /api/reportes)',
       comentarios: '/comentarios (o /api/comentarios)',
+      secciones: '/secciones (o /api/secciones)',
+      propuestas: '/propuestas (o /api/propuestas)',
     },
   });
 });

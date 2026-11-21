@@ -8,4 +8,5 @@ app.listen(config.port, () => {
   console.log(`📍 Sitios API: http://localhost:${config.port}/sitios`);
   console.log(`📝 Reportes API: http://localhost:${config.port}/reportes`);
   console.log(`💬 Comentarios API: http://localhost:${config.port}/comentarios`);
+  console.log(`💡 Propuestas API: http://localhost:${config.port}/propuestas`);
 });
