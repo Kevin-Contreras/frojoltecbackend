@@ -1,0 +1,133 @@
+import { Prisma } from '@prisma/client';
+import { NextFunction, Request, Response } from 'express';
+import prisma from '../lib/prisma';
+
+const sitioInclude = {
+  reportes: {
+    orderBy: { creadoEn: 'desc' as const },
+    include: {
+      fotos: {
+        orderBy: { creadoEn: 'desc' as const },
+      },
+    },
+  },
+};
+
+type SitioRecord = Prisma.SitioGetPayload<{ include: typeof sitioInclude }>;
+
+function decimal(value: Prisma.Decimal | null): number | null {
+  return value === null ? null : value.toNumber();
+}
+
+function serializeSitio(sitio: SitioRecord) {
+  return {
+    id: sitio.id,
+    gpwId: sitio.gpwId,
+    lugar: sitio.lugar,
+    departamento: sitio.departamento,
+    longitud: decimal(sitio.longitud),
+    latitud: decimal(sitio.latitud),
+    distanciaAguaM: decimal(sitio.distanciaAguaM),
+    tipoAguaCercana: sitio.tipoAguaCercana,
+    poblacion1km: sitio.poblacion1km,
+    poblacion5km: sitio.poblacion5km,
+    elevacionM: decimal(sitio.elevacionM),
+    pendienteGrados: decimal(sitio.pendienteGrados),
+    tipo: sitio.tipo,
+    verificadoEnCampo: sitio.verificadoEnCampo,
+    licencia: sitio.licencia,
+    fuentes: sitio.fuentes,
+    reportes: sitio.reportes.map((reporte) => ({
+      id: reporte.id,
+      sitioId: reporte.sitioId,
+      resultado: reporte.resultado,
+      creadoEn: reporte.creadoEn,
+      fotos: reporte.fotos.map((foto) => ({
+        id: foto.id,
+        reporteId: foto.reporteId,
+        url: foto.url,
+        creadoEn: foto.creadoEn,
+      })),
+    })),
+  };
+}
+
+export const getSitios = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const departamento = typeof req.query.departamento === 'string' ? req.query.departamento : undefined;
+    const tipoAguaCercana = typeof req.query.tipo_agua_cercana === 'string' ? req.query.tipo_agua_cercana : undefined;
+
+    const sitios = await prisma.sitio.findMany({
+      where: {
+        ...(departamento && { departamento }),
+        ...(tipoAguaCercana && { tipoAguaCercana }),
+      },
+      include: sitioInclude,
+      orderBy: { id: 'asc' },
+    });
+
+    res.json({
+      success: true,
+      data: sitios.map(serializeSitio),
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getSitiosResumen = async (_req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const [total, porDepartamento, porAgua] = await Promise.all([
+      prisma.sitio.count(),
+      prisma.sitio.groupBy({
+        by: ['departamento'],
+        _count: { _all: true },
+        orderBy: { _count: { departamento: 'desc' } },
+      }),
+      prisma.sitio.groupBy({
+        by: ['tipoAguaCercana'],
+        _count: { _all: true },
+        orderBy: { _count: { tipoAguaCercana: 'desc' } },
+      }),
+    ]);
+
+    res.json({
+      success: true,
+      data: {
+        total,
+        porDepartamento: porDepartamento.map((row) => ({
+          departamento: row.departamento,
+          sitios: row._count._all,
+        })),
+        porTipoAguaCercana: porAgua.map((row) => ({
+          tipoAguaCercana: row.tipoAguaCercana,
+          sitios: row._count._all,
+        })),
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getSitioById = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const sitio = await prisma.sitio.findUnique({
+      where: { id },
+      include: sitioInclude,
+    });
+
+    if (!sitio) {
+      res.status(404).json({ success: false, message: 'Sitio no encontrado' });
+      return;
+    }
+
+    res.json({
+      success: true,
+      data: serializeSitio(sitio),
+    });
+  } catch (error) {
+    next(error);
+  }
+};
