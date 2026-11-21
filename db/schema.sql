@@ -111,3 +111,40 @@ COMMENT ON TABLE comentarios IS
     'Comentarios anónimos del sitio público. No guardan nombre ni datos de contacto.';
 COMMENT ON COLUMN comentarios.texto IS
     'Texto del comentario, máximo 200 caracteres.';
+
+-- Anonymous suggestions for a section of the app. No name or contact is stored.
+
+CREATE TABLE secciones (
+    id      text PRIMARY KEY,
+    nombre  text NOT NULL UNIQUE
+);
+
+COMMENT ON TABLE secciones IS
+    'Secciones de la app que pueden recibir propuestas. El formulario las muestra como categoría.';
+
+INSERT INTO secciones (id, nombre) VALUES
+    ('mapa', 'Mapa'),
+    ('reportes', 'Reportes');
+
+CREATE TABLE propuestas (
+    id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    seccion_id  text NOT NULL REFERENCES secciones (id),
+    texto       varchar(250) NOT NULL,
+    me_gusta    integer NOT NULL DEFAULT 0,
+    creado_en   timestamptz NOT NULL DEFAULT now(),
+
+    CONSTRAINT propuestas_texto_no_vacio
+        CHECK (char_length(btrim(texto)) > 0),
+    CONSTRAINT propuestas_me_gusta_no_negativo
+        CHECK (me_gusta >= 0)
+);
+
+CREATE INDEX propuestas_seccion_id_idx ON propuestas (seccion_id);
+CREATE INDEX propuestas_creado_en_idx ON propuestas (creado_en DESC);
+
+COMMENT ON TABLE propuestas IS
+    'Propuestas anónimas de cambio para una sección de la app.';
+COMMENT ON COLUMN propuestas.texto IS
+    'Texto de la propuesta, máximo 250 caracteres.';
+COMMENT ON COLUMN propuestas.me_gusta IS
+    'Cantidad de veces que alguien marcó Me gusta. No identifica a la persona.';

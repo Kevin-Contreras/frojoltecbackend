@@ -86,3 +86,24 @@ model Comentario {
   @@index([creadoEn(sort: Desc)])
   @@map("comentarios")
 }
+
+model Seccion {
+  id         String      @id
+  nombre     String      @unique
+  propuestas Propuesta[]
+
+  @@map("secciones")
+}
+
+model Propuesta {
+  id        String   @id @default(uuid()) @db.Uuid
+  seccionId String   @map("seccion_id")
+  texto     String   @db.VarChar(250)
+  meGusta   Int      @default(0) @map("me_gusta")
+  creadoEn  DateTime @default(now()) @map("creado_en")
+  seccion   Seccion  @relation(fields: [seccionId], references: [id])
+
+  @@index([seccionId])
+  @@index([creadoEn(sort: Desc)])
+  @@map("propuestas")
+}
