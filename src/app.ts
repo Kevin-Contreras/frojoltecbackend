@@ -28,6 +28,7 @@ app.get('/', (_req: Request, res: Response) => {
       users: '/users (o /api/users)',
       sitios: '/sitios (o /api/sitios)',
       sitiosMapa: '/sitios/mapa (o /api/sitios/mapa)',
+      sitiosLista: '/sitios/lista (o /api/sitios/lista)',
       sitiosResumen: '/sitios/resumen (o /api/sitios/resumen)',
       reportes: '/reportes (o /api/reportes)',
       comentarios: '/comentarios (o /api/comentarios)',

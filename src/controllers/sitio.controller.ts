@@ -82,6 +82,51 @@ export const getSitiosMapa = async (_req: Request, res: Response, next: NextFunc
   }
 };
 
+export const getSitiosLista = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const q = typeof req.query.q === 'string' ? req.query.q.trim() : '';
+
+    const sitios = await prisma.sitio.findMany({
+      where: q
+        ? {
+            OR: [
+              { departamento: { contains: q, mode: 'insensitive' } },
+              { lugar: { contains: q, mode: 'insensitive' } },
+            ],
+          }
+        : undefined,
+      select: {
+        id: true,
+        lugar: true,
+        departamento: true,
+        longitud: true,
+        latitud: true,
+        distanciaAguaM: true,
+        _count: { select: { reportes: true } },
+      },
+      orderBy: { id: 'asc' },
+    });
+
+    const data = sitios.map((sitio) => ({
+      id: sitio.id,
+      lugar: sitio.lugar,
+      departamento: sitio.departamento,
+      longitud: decimal(sitio.longitud),
+      latitud: decimal(sitio.latitud),
+      distanciaAguaM: decimal(sitio.distanciaAguaM),
+      revisado: sitio._count.reportes > 0,
+    }));
+
+    res.json({
+      success: true,
+      total: data.length,
+      data,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const getSitios = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const departamento = typeof req.query.departamento === 'string' ? req.query.departamento : undefined;
