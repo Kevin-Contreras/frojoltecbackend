@@ -58,17 +58,24 @@ COMMENT ON COLUMN sitios.fuentes IS
 -- A site can have many reports. The place name stays on sitios.
 
 CREATE TABLE reportes (
-    id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-    sitio_id    text NOT NULL REFERENCES sitios (id),
-    resultado   text NOT NULL,
-    creado_en   timestamptz NOT NULL DEFAULT now(),
+    id            uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    sitio_id      text NOT NULL REFERENCES sitios (id),
+    resultado     text NOT NULL,
+    fecha_visita  date NOT NULL,
+    comentario    text,
+    contacto      varchar(200),
+    creado_en     timestamptz NOT NULL DEFAULT now(),
 
     CONSTRAINT reportes_resultado_valido
         CHECK (resultado IN (
             'hay_basura',
             'no_hay_basura',
             'no_pude_entrar'
-        ))
+        )),
+    CONSTRAINT reportes_comentario_largo
+        CHECK (comentario IS NULL OR char_length(comentario) <= 2000),
+    CONSTRAINT reportes_contacto_no_vacio
+        CHECK (contacto IS NULL OR char_length(btrim(contacto)) > 0)
 );
 
 CREATE INDEX reportes_sitio_id_idx ON reportes (sitio_id);
@@ -79,6 +86,12 @@ COMMENT ON COLUMN reportes.sitio_id IS
     'Sitio que estaba abierto en el formulario.';
 COMMENT ON COLUMN reportes.resultado IS
     'hay_basura, no_hay_basura o no_pude_entrar.';
+COMMENT ON COLUMN reportes.fecha_visita IS
+    'Día de la visita, del campo ¿Cuándo fuiste?';
+COMMENT ON COLUMN reportes.comentario IS
+    'Comentario opcional de la visita.';
+COMMENT ON COLUMN reportes.contacto IS
+    'Teléfono o correo opcional para contactar a quien reportó.';
 
 CREATE TABLE fotos (
     id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
